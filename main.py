@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -18,7 +20,7 @@ def get_db() -> Session:
 
 
 @app.get("/")
-def read_root():
+def read_root() -> dict:
     return {"message": "Server is up!"}
 
 
@@ -30,7 +32,7 @@ def read_authors(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
     db: Session = Depends(get_db),
-):
+) -> List[schemas.Author]:
     return crud.get_authors_list(skip=skip, limit=limit, db=db)
 
 
@@ -38,7 +40,10 @@ def read_authors(
     "/authors/{author_id}/",
     response_model=schemas.Author,
 )
-def read_author_by_id(author_id: int, db: Session = Depends(get_db)):
+def read_author_by_id(
+    author_id: int,
+    db: Session = Depends(get_db),
+) -> schemas.Author:
     db_author = crud.get_author(db=db, author_id=author_id)
 
     if db_author is None:
@@ -51,7 +56,7 @@ def read_author_by_id(author_id: int, db: Session = Depends(get_db)):
 def create_author(
     author: schemas.AuthorCreate,
     db: Session = Depends(get_db),
-):
+) -> schemas.Author:
     db_author = crud.get_author_by_name(db=db, name=author.name)
 
     if db_author:
@@ -72,7 +77,7 @@ def read_books(
     limit: int = Query(10, ge=1),
     author_id: int | None = None,
     db: Session = Depends(get_db),
-):
+) -> List[schemas.Book]:
     return crud.get_book_list(
         db=db,
         author_id=author_id,
@@ -88,5 +93,5 @@ def read_books(
 def create_book(
     book: schemas.BookCreate,
     db: Session = Depends(get_db),
-):
+) -> schemas.Book:
     return crud.create_book(db=db, book=book)
